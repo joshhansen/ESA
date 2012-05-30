@@ -14,8 +14,8 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.util.Config;
 import jhn.util.Log;
 
@@ -39,6 +39,8 @@ public class ESA {
 	
 	private final Config conf = new Config();
 	
+	private double[] overallInterpVect;
+	
 	public ESA(LabelAlphabet conceptLabels, TopicCounts topicCounts, TypeTopicCounts typeTopicCounts, String logFilename) throws FileNotFoundException {
 		this.conceptLabels = conceptLabels;
 		this.topicCounts = topicCounts;
@@ -46,10 +48,13 @@ public class ESA {
 		this.log = new Log(System.out, logFilename);
 		
 		conf.putInt(Options.NUM_CONCEPTS, conceptLabels.size());
-		conf.putInt(Options.PRINT_NUM_TOP_CONCEPTS, 10);
+		conf.putInt(Options.PRINT_NUM_TOP_DOC_CONCEPTS, 10);
+		conf.putInt(Options.PRINT_NUM_TOP_OVERALL_CONCEPTS, 100);
 	}
 	
 	public void setTrainingData(InstanceList trainingData) {
+		overallInterpVect = new double[conf.getInt(Options.NUM_CONCEPTS)];
+		
 		wordTypes = trainingData.getAlphabet();
 		
 		final int numDocs = trainingData.size();
@@ -139,9 +144,21 @@ public class ESA {
 			Iterator<TypeTopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
 			while(ttcs.hasNext()) {
 				TypeTopicCount ttc = ttcs.next();
-				double conceptTermWeight = (double) ttc.count / (double) topicCounts.topicCount(ttc.topic);
-				semInterpVect[ttc.topic] += termWeight * conceptTermWeight;
+				final double topicCount = (double) topicCounts.topicCount(ttc.topic);
+				if(topicCount > 0.0) {
+					double conceptTermWeight = (double) ttc.count / topicCount;
+					semInterpVect[ttc.topic] += termWeight * conceptTermWeight;
+					
+					if(Double.isInfinite(semInterpVect[ttc.topic])) {
+						System.err.println("Warning");
+					}
+				}
 			}
+		}
+		
+		// Add this document's weights to the overall weights
+		for(int i = 0; i < semInterpVect.length; i++) {
+			overallInterpVect[i] += semInterpVect[i];
 		}
 		
 		return semInterpVect;
@@ -166,7 +183,7 @@ public class ESA {
 		log.println(docNames[docNum]);
 		
 		ConceptWeight[] concepts = sortedSemanticInterpretationVector(docNum);
-		for(int i = 0; i < Math.min(concepts.length, conf.getInt(Options.PRINT_NUM_TOP_CONCEPTS)); i++) {
+		for(int i = 0; i < Math.min(concepts.length, conf.getInt(Options.PRINT_NUM_TOP_DOC_CONCEPTS)); i++) {
 			log.println(concepts[i]);
 		}
 		log.println();
@@ -178,5 +195,18 @@ public class ESA {
 		for(int docNum = 0; docNum < documentTerms.length; docNum++) {
 			printSemInterpVect(docNum);
 		}
+		
+		
+		log.println("---Overall---");
+		ConceptWeight[] datasetConcepts = new ConceptWeight[overallInterpVect.length];
+		for(int i = 0; i < datasetConcepts.length; i++) {
+			datasetConcepts[i] = new ConceptWeight(i, overallInterpVect[i]);
+		}
+		Arrays.sort(datasetConcepts);
+		
+		for(int i = 0; i < Math.min(datasetConcepts.length, conf.getInt(Options.PRINT_NUM_TOP_OVERALL_CONCEPTS)); i++) {
+			log.println(datasetConcepts[i]);
+		}
+		log.println();
 	}
 }

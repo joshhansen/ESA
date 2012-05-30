@@ -5,7 +5,6 @@ import java.io.File;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 
-import jhn.eda.Paths;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.util.Util;
@@ -39,7 +38,7 @@ public final class RunESA {
 	
 	public static void main (String[] args) throws Exception {
 		final String topicWordIdxName = "wp_lucene4";
-		final String datasetName = "debates2012";// toy_dataset2, debates2012, state_of_the_union
+		final String datasetName = "sacred_texts";// toy_dataset2, debates2012, sacred_texts, state_of_the_union
 		final int minCount = 2;
 		
         System.out.print("Loading target corpus...");
@@ -52,7 +51,7 @@ public final class RunESA {
 		System.out.println("done.");
 		
 		System.out.print("Loading topic counts...");
-		final String topicCountsFilename = Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String topicCountsFilename = jhn.eda.Paths.topicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TopicCounts tcs = (TopicCounts) Util.deserialize(topicCountsFilename);
 		System.out.println("done.");
 
