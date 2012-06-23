@@ -12,7 +12,15 @@ public final class Paths {
 //		}
 	
 	public static String outputDir() {
-		return System.getenv("HOME") + "/Projects/esa_output";
+		return jhn.Paths.outputDir("ESA");
+	}
+	
+	public static String featselDir() {
+		return outputDir() + "/featsel";
+	}
+	
+	public static String featselFilename(String topicWordIdxName, String datasetName, int topN) {
+		return featselDir() + "/" + topicWordIdxName + ":" + datasetName + "_top" + topN + ".ser";
 	}
 	
 //		public static String countsDir() {
@@ -60,7 +68,7 @@ public final class Paths {
 			return outputDir() + "/runs";
 		}
 	
-//	public static String extractedDataID(String topicWordIdxName, String datasetName, int minCount) {
-//		return topicWordIdxName + ":" + datasetName + "_min" + minCount;
-//	}
+	public static String extractedDataID(String topicWordIdxName, String datasetName, int minCount) {
+		return topicWordIdxName + ":" + datasetName + "_min" + minCount;
+	}
 }

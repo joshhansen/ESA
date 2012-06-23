@@ -1,27 +1,41 @@
 package jhn.esa;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.LabelAlphabet;
 
+import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
+import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
+import jhn.counts.Int2DoubleCounter;
+import jhn.counts.IntIntCounter;
 import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCount;
+import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.idx.IntIndex;
+import jhn.idx.StringIndex;
 import jhn.util.Config;
 import jhn.util.Log;
+import jhn.util.Util;
 
 public class ESA {
-	
+	private final String logDir;
 	private final Log log;
+	
+	protected int numDocs;
 	
 	private Alphabet wordTypes;
 	
@@ -29,43 +43,50 @@ public class ESA {
 	
 	private int[][] documentTerms;
 	
-	private double[][] trainingDataTfidfs;
-	
-	private final LabelAlphabet conceptLabels;
+	private int df[];
+	private IntIntCounter[] tf;
+	private double logNumDocs;
 	
 	private final TopicCounts topicCounts;
 	
 	private final TypeTopicCounts typeTopicCounts;
 	
-	private final Config conf = new Config();
+	public final Config conf = new Config();
 	
-	private double[] overallInterpVect;
+	// Classification helpers
+	protected String[] docLabels;
+	protected StringIndex allLabels;
 	
-	public ESA(LabelAlphabet conceptLabels, TopicCounts topicCounts, TypeTopicCounts typeTopicCounts, String logFilename) throws FileNotFoundException {
-		this.conceptLabels = conceptLabels;
+	public ESA(TopicCounts topicCounts, TypeTopicCounts typeTopicCounts, String logDir) throws FileNotFoundException {
 		this.topicCounts = topicCounts;
 		this.typeTopicCounts = typeTopicCounts;
-		this.log = new Log(System.out, logFilename);
-		
-		conf.putInt(Options.NUM_CONCEPTS, conceptLabels.size());
+		this.logDir = logDir;
+		new File(logDir).mkdirs();
+		this.log = new Log(System.out, logDir + "/main.log");
+
 		conf.putInt(Options.PRINT_NUM_TOP_DOC_CONCEPTS, 10);
 		conf.putInt(Options.PRINT_NUM_TOP_OVERALL_CONCEPTS, 100);
 	}
 	
 	public void setTrainingData(InstanceList trainingData) {
-		overallInterpVect = new double[conf.getInt(Options.NUM_CONCEPTS)];
-		
 		wordTypes = trainingData.getAlphabet();
 		
-		final int numDocs = trainingData.size();
+		numDocs = trainingData.size();
+		logNumDocs = Math.log(numDocs);
+		
 		final int numTypes = wordTypes.size();
 		
 		// Count term frequencies and document frequencies. Also store which terms are in each document.
 		log.print("Counting frequencies...");
-		int[] df = new int[numTypes];
-		int[][] tf = new int[numDocs][];
+		df = new int[numTypes];
+		tf = new IntIntCounter[numDocs];
+		
 		documentTerms = new int[numDocs][];
 		docNames = new String[numDocs];
+		
+		docLabels = new String[numDocs];
+		SortedSet<String> labels = new TreeSet<String>();
+		String label;
 		
 		for(int docNum = 0; docNum < tf.length; docNum++) {
 			Instance doc = trainingData.get(docNum);
@@ -73,12 +94,16 @@ public class ESA {
 			
 			FeatureSequence feats = (FeatureSequence) doc.getData();
 			
-			tf[docNum] = new int[numTypes];
+			tf[docNum] = new IntIntCounter(new Int2IntArrayMap());
 			IntSet typesInDoc = new IntOpenHashSet();
 			for(int typeIdx : feats.getFeatures()) {
-				tf[docNum][typeIdx]++;
+				tf[docNum].inc(typeIdx);
 				typesInDoc.add(typeIdx);
 			}
+			
+			label = doc.getTarget().toString();
+			docLabels[docNum] = label;
+			labels.add(label);
 			
 			int[] docTerms = typesInDoc.toIntArray();
 			Arrays.sort(docTerms);
@@ -92,54 +117,23 @@ public class ESA {
 		}
 		log.println("done.");
 		
-		// Compute tf-idfs
-		log.print("Computing tf-idf...");
-		trainingDataTfidfs = new double[numDocs][];
-		final double logNumDocs = Math.log(numDocs);
-		for(int docNum = 0; docNum < tf.length; docNum++) {
-			trainingDataTfidfs[docNum] = new double[numTypes];
-			for(int typeIdx = 0; typeIdx < trainingDataTfidfs[docNum].length; typeIdx++) {
-				double idf = logNumDocs - Math.log(df[typeIdx]);
-				trainingDataTfidfs[docNum][typeIdx] = tf[docNum][typeIdx] * idf;
-			}
-		}
-		log.println("done.");
-	}
-	
-	public final class ConceptWeight implements Comparable<ConceptWeight> {
-		public final int conceptNum;
-		public final double weight;
-		private ConceptWeight(int conceptNum, double weight) {
-			this.conceptNum = conceptNum;
-			this.weight = weight;
-		}
-		
-		@Override
-		public int compareTo(ConceptWeight o) {
-			return Double.compare(o.weight, this.weight);
-		}
-		
-		@Override
-		public String toString() {
-			StringBuilder s = new StringBuilder();
-			
-			s.append('#');
-			s.append(conceptNum);
-			s.append(' ');
-			s.append(conceptLabels.lookupObject(conceptNum));
-			
-			s.append(": ");
-			s.append(weight);
-			
-			return s.toString();
+		allLabels = new StringIndex();
+		allLabels.indexOf("none");//Needed for use in SparseInstance
+		for(String theLabel : labels) {
+			allLabels.indexOf(theLabel);
 		}
 	}
 	
-	public double[] semanticInterpretationVector(int docNum) throws Exception {
-		double[] semInterpVect = new double[conf.getInt(Options.NUM_CONCEPTS)];
+	private double tfidf(int docNum, int typeIdx) {
+		double idf = logNumDocs - Math.log(df[typeIdx]);
+		return tf[docNum].getCountI(typeIdx) * idf;
+	}
+	
+	private Int2DoubleCounter semInterp(int docNum) throws Exception {
+		Int2DoubleCounter semInterp = new Int2DoubleCounter();
 		
 		for(int typeIdx : documentTerms[docNum]) {
-			double termWeight = trainingDataTfidfs[docNum][typeIdx];
+			double termWeight = tfidf(docNum, typeIdx);
 			
 			Iterator<TypeTopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
 			while(ttcs.hasNext()) {
@@ -147,66 +141,106 @@ public class ESA {
 				final double topicCount = (double) topicCounts.topicCount(ttc.topic);
 				if(topicCount > 0.0) {
 					double conceptTermWeight = (double) ttc.count / topicCount;
-					semInterpVect[ttc.topic] += termWeight * conceptTermWeight;
-					
-					if(Double.isInfinite(semInterpVect[ttc.topic])) {
-						System.err.println("Warning");
+					semInterp.inc(ttc.topic, termWeight * conceptTermWeight);
+				}
+			}
+		}
+		
+		semInterp.trim();
+		
+		return semInterp;
+	}
+	
+	private Int2DoubleCounter semInterp(int docNum, IntIndex features) throws Exception {
+		Int2DoubleCounter semInterp = new Int2DoubleCounter();
+		int featureIdx;
+		for(int typeIdx : documentTerms[docNum]) {
+			double termWeight = tfidf(docNum, typeIdx);
+			
+			Iterator<TypeTopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
+			while(ttcs.hasNext()) {
+				TypeTopicCount ttc = ttcs.next();
+				featureIdx = features.indexOfI(ttc.topic, false);
+				if(featureIdx != IntIndex.KEY_NOT_FOUND) {
+					final double topicCount = (double) topicCounts.topicCount(ttc.topic);
+					if(topicCount > 0.0) {
+						double conceptTermWeight = (double) ttc.count / topicCount;
+						semInterp.inc(featureIdx, termWeight * conceptTermWeight);
 					}
 				}
 			}
 		}
 		
-		// Add this document's weights to the overall weights
-		for(int i = 0; i < semInterpVect.length; i++) {
-			overallInterpVect[i] += semInterpVect[i];
-		}
+		semInterp.trim();
 		
-		return semInterpVect;
+		return semInterp;
 	}
 	
-	public ConceptWeight[] sortedSemanticInterpretationVector(int docNum) throws Exception {
-		double[] semInterpVect = semanticInterpretationVector(docNum);
+	public void selectFeatures(String outputFilename, int topN) throws Exception {
+		log.print("Selecting features...");
+		IntIndex topics = new IntIndex();
 		
-		ConceptWeight[] sorted = new ConceptWeight[semInterpVect.length];
-		for(int i = 0; i < sorted.length; i++) {
-			sorted[i] = new ConceptWeight(i, semInterpVect[i]);
+		Int2DoubleCounter semInterpVector;
+		for(int docNum = 0; docNum < numDocs; docNum++) {
+			semInterpVector = semInterp(docNum);
+			
+			for(Int2DoubleMap.Entry entry : semInterpVector.fastTopN(topN)) {
+				topics.indexOfI(entry.getIntKey());
+			}
+			
+			log.print('.');
+			if(docNum % 120 == 0) {
+				log.println(docNum);
+			}
 		}
-		Arrays.sort(sorted);
-		return sorted;
+		log.println("done.");
+		
+		log.println("Selected " + topics.size() + " features.");
+		
+		log.print("Serializing selected features...");
+		Util.serialize(topics, outputFilename);
+		log.println("done.");
 	}
 	
-	
-	public void printSemInterpVect(int docNum) throws Exception {
-		log.print("Document ");
-		log.print(docNum);
-		log.print(": ");
-		log.println(docNames[docNum]);
-		
-		ConceptWeight[] concepts = sortedSemanticInterpretationVector(docNum);
-		for(int i = 0; i < Math.min(concepts.length, conf.getInt(Options.PRINT_NUM_TOP_DOC_CONCEPTS)); i++) {
-			log.println(concepts[i]);
+	public static final Comparator<Int2DoubleMap.Entry> fastKeyCmp = new Comparator<Int2DoubleMap.Entry>(){
+		@Override
+		public int compare(Int2DoubleMap.Entry o1, Int2DoubleMap.Entry o2) {
+			return Util.compareInts(o1.getIntKey(), o2.getIntKey());
 		}
-		log.println();
+	};
+	
+	public void printReducedDocsLibSvm(IntIndex features) throws Exception {
+		PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced.libsvm"));
+		printReducedDocsLibSvm(features, out);
+		out.close();
 	}
 	
-	public void printSemInterpVectors() throws Exception {
-		log.println("Computing semantic interpretation vectors using configuration:");
-		log.println(conf);
-		for(int docNum = 0; docNum < documentTerms.length; docNum++) {
-			printSemInterpVect(docNum);
+	private void printReducedDocsLibSvm(IntIndex features, PrintStream out) throws Exception {
+		int classNum;
+		Int2DoubleCounter semInterpVector;
+		for(int docNum = 0; docNum < numDocs; docNum++) {
+			semInterpVector = semInterp(docNum, features);
+			
+			classNum = allLabels.indexOf(docLabels[docNum]);
+			
+			out.print(classNum);
+			
+			Int2DoubleMap.Entry[] entries = semInterpVector.int2DoubleEntrySet().toArray(new Int2DoubleMap.Entry[0]);
+			Arrays.sort(entries, fastKeyCmp);
+			
+			for(Int2DoubleMap.Entry entry : entries) {
+				out.print(' ');
+				out.print(entry.getIntKey());
+				out.print(':');
+				out.print(entry.getDoubleValue());
+			}
+			out.println();
+			
+			log.print('.');
+			if(docNum > 0 && docNum % 120 == 0) {
+				log.println(docNum);
+			}
 		}
-		
-		
-		log.println("---Overall---");
-		ConceptWeight[] datasetConcepts = new ConceptWeight[overallInterpVect.length];
-		for(int i = 0; i < datasetConcepts.length; i++) {
-			datasetConcepts[i] = new ConceptWeight(i, overallInterpVect[i]);
-		}
-		Arrays.sort(datasetConcepts);
-		
-		for(int i = 0; i < Math.min(datasetConcepts.length, conf.getInt(Options.PRINT_NUM_TOP_OVERALL_CONCEPTS)); i++) {
-			log.println(datasetConcepts[i]);
-		}
-		log.println();
 	}
+	
 }

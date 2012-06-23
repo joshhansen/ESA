@@ -1,11 +1,13 @@
 package jhn.esa;
 
-final class Options {
-	private Options() {}
-
-	public static final String NUM_CONCEPTS = "num_concepts";
+enum Options {
+	NUM_CONCEPTS,
 	
-	public static final String PRINT_NUM_TOP_DOC_CONCEPTS = "print_num_top_doc_concepts";
+	PRINT_NUM_TOP_DOC_CONCEPTS,
 	
-	public static final String PRINT_NUM_TOP_OVERALL_CONCEPTS = "print_num_top_overall_concepts";
+	PRINT_NUM_TOP_OVERALL_CONCEPTS,
+	
+	PRINT_REDUCED_DOCS,
+	
+	REDUCED_DOCS_TOP_N
 }
