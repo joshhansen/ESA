@@ -20,13 +20,18 @@ import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
-import jhn.counts.Int2DoubleCounter;
-import jhn.counts.IntIntCounter;
+import jhn.counts.doubles.IntDoubleCounter;
+import jhn.counts.doubles.IntDoubleRAMCounter;
+import jhn.counts.ints.IntIntCounter;
+import jhn.counts.ints.IntIntRAMCounter;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
+import jhn.idx.Index;
 import jhn.idx.IntIndex;
-import jhn.idx.StringIndex;
+import jhn.idx.IntRAMIndex;
+import jhn.idx.RAMIndex;
+import jhn.idx.ReverseIndex;
 import jhn.util.Config;
 import jhn.util.Log;
 import jhn.util.Util;
@@ -55,7 +60,7 @@ public class ESA {
 	
 	// Classification helpers
 	protected String[] docLabels;
-	protected StringIndex allLabels;
+	protected Index<String> allLabels;
 	
 	public ESA(TopicCounts topicCounts, TypeTopicCounts typeTopicCounts, String logDir) throws FileNotFoundException {
 		this.topicCounts = topicCounts;
@@ -85,7 +90,7 @@ public class ESA {
 		docNames = new String[numDocs];
 		
 		docLabels = new String[numDocs];
-		SortedSet<String> labels = new TreeSet<String>();
+		SortedSet<String> labels = new TreeSet<>();
 		String label;
 		
 		for(int docNum = 0; docNum < tf.length; docNum++) {
@@ -94,7 +99,7 @@ public class ESA {
 			
 			FeatureSequence feats = (FeatureSequence) doc.getData();
 			
-			tf[docNum] = new IntIntCounter(new Int2IntArrayMap());
+			tf[docNum] = new IntIntRAMCounter(new Int2IntArrayMap());
 			IntSet typesInDoc = new IntOpenHashSet();
 			for(int typeIdx : feats.getFeatures()) {
 				tf[docNum].inc(typeIdx);
@@ -117,7 +122,7 @@ public class ESA {
 		}
 		log.println("done.");
 		
-		allLabels = new StringIndex();
+		allLabels = new RAMIndex<>();
 		allLabels.indexOf("none");//Needed for use in SparseInstance
 		for(String theLabel : labels) {
 			allLabels.indexOf(theLabel);
@@ -126,11 +131,11 @@ public class ESA {
 	
 	private double tfidf(int docNum, int typeIdx) {
 		double idf = logNumDocs - Math.log(df[typeIdx]);
-		return tf[docNum].getCountI(typeIdx) * idf;
+		return tf[docNum].getCount(typeIdx) * idf;
 	}
 	
-	private Int2DoubleCounter semInterp(int docNum) throws Exception {
-		Int2DoubleCounter semInterp = new Int2DoubleCounter();
+	private IntDoubleCounter semInterp(int docNum) throws Exception {
+		IntDoubleRAMCounter semInterp = new IntDoubleRAMCounter();
 		
 		for(int typeIdx : documentTerms[docNum]) {
 			double termWeight = tfidf(docNum, typeIdx);
@@ -138,9 +143,9 @@ public class ESA {
 			Iterator<TypeTopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
 			while(ttcs.hasNext()) {
 				TypeTopicCount ttc = ttcs.next();
-				final double topicCount = (double) topicCounts.topicCount(ttc.topic);
+				final double topicCount = topicCounts.topicCount(ttc.topic);
 				if(topicCount > 0.0) {
-					double conceptTermWeight = (double) ttc.count / topicCount;
+					double conceptTermWeight = ttc.count / topicCount;
 					semInterp.inc(ttc.topic, termWeight * conceptTermWeight);
 				}
 			}
@@ -151,8 +156,8 @@ public class ESA {
 		return semInterp;
 	}
 	
-	private Int2DoubleCounter semInterp(int docNum, IntIndex features) throws Exception {
-		Int2DoubleCounter semInterp = new Int2DoubleCounter();
+	private IntDoubleCounter semInterp(int docNum, IntIndex features) throws Exception {
+		IntDoubleRAMCounter semInterp = new IntDoubleRAMCounter();
 		int featureIdx;
 		for(int typeIdx : documentTerms[docNum]) {
 			double termWeight = tfidf(docNum, typeIdx);
@@ -161,10 +166,10 @@ public class ESA {
 			while(ttcs.hasNext()) {
 				TypeTopicCount ttc = ttcs.next();
 				featureIdx = features.indexOfI(ttc.topic, false);
-				if(featureIdx != IntIndex.KEY_NOT_FOUND) {
-					final double topicCount = (double) topicCounts.topicCount(ttc.topic);
+				if(featureIdx != ReverseIndex.KEY_NOT_FOUND) {
+					final double topicCount = topicCounts.topicCount(ttc.topic);
 					if(topicCount > 0.0) {
-						double conceptTermWeight = (double) ttc.count / topicCount;
+						double conceptTermWeight = ttc.count / topicCount;
 						semInterp.inc(featureIdx, termWeight * conceptTermWeight);
 					}
 				}
@@ -178,9 +183,9 @@ public class ESA {
 	
 	public void selectFeatures(String outputFilename, int topN) throws Exception {
 		log.print("Selecting features...");
-		IntIndex topics = new IntIndex();
+		IntIndex topics = new IntRAMIndex();
 		
-		Int2DoubleCounter semInterpVector;
+		IntDoubleCounter semInterpVector;
 		for(int docNum = 0; docNum < numDocs; docNum++) {
 			semInterpVector = semInterp(docNum);
 			
@@ -217,7 +222,7 @@ public class ESA {
 	
 	private void printReducedDocsLibSvm(IntIndex features, PrintStream out) throws Exception {
 		int classNum;
-		Int2DoubleCounter semInterpVector;
+		IntDoubleCounter semInterpVector;
 		for(int docNum = 0; docNum < numDocs; docNum++) {
 			semInterpVector = semInterp(docNum, features);
 			
