@@ -20,10 +20,10 @@ import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
-import jhn.counts.doubles.IntDoubleCounter;
-import jhn.counts.doubles.IntDoubleRAMCounter;
-import jhn.counts.ints.IntIntCounter;
-import jhn.counts.ints.IntIntRAMCounter;
+import jhn.counts.d.i.IntDoubleCounter;
+import jhn.counts.d.i.IntDoubleRAMCounter;
+import jhn.counts.i.i.IntIntCounter;
+import jhn.counts.i.i.IntIntRAMCounter;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
