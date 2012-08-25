@@ -36,7 +36,7 @@ import jhn.util.Config;
 import jhn.util.Log;
 import jhn.util.Util;
 
-public class ESA {
+public class ESA implements AutoCloseable {
 	private final String logDir;
 	private final Log log;
 	
@@ -215,9 +215,9 @@ public class ESA {
 	};
 	
 	public void printReducedDocsLibSvm(IntIndex features) throws Exception {
-		PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced.libsvm"));
-		printReducedDocsLibSvm(features, out);
-		out.close();
+		try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced.libsvm"))) {
+			printReducedDocsLibSvm(features, out);
+		}
 	}
 	
 	private void printReducedDocsLibSvm(IntIndex features, PrintStream out) throws Exception {
@@ -246,6 +246,11 @@ public class ESA {
 				log.println(docNum);
 			}
 		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		log.close();
 	}
 	
 }
