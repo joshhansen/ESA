@@ -46,19 +46,6 @@ public final class RunESA {
 		final String topicCountsFilename = jhn.eda.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TopicCounts tcs = (TopicCounts) Util.deserialize(topicCountsFilename);
 		System.out.println("done.");
-
-//		System.out.print("Loading label alphabet...");
-//		String labelAlphabetFilename = jhn.eda.Paths.labelAlphabetFilename(topicWordIdxName, datasetName, minCount);
-//		LabelAlphabet topicAlphabet = (LabelAlphabet) Util.deserialize(labelAlphabetFilename);
-//		System.out.println("done.");
-//		
-//		int numConcepts = topicAlphabet.size();
-//		topicAlphabet = null;
-//		System.gc();
-//		System.out.println(numConcepts);
-		
-		int numConcepts = 3441669;
-		System.err.println("WARNING: numConcepts is fixed at " + numConcepts);
 		
 		ESA esa = new ESA(tcs, ttcs, logFilename());
 		
