@@ -25,7 +25,7 @@ import jhn.counts.d.i.IntDoubleRAMCounter;
 import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.IntIntRAMCounter;
 import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.typetopiccounts.TypeTopicCount;
+import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.Index;
 import jhn.idx.IntIndex;
@@ -140,9 +140,9 @@ public class ESA implements AutoCloseable {
 		for(int typeIdx : documentTerms[docNum]) {
 			double termWeight = tfidf(docNum, typeIdx);
 			
-			Iterator<TypeTopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
+			Iterator<TopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
 			while(ttcs.hasNext()) {
-				TypeTopicCount ttc = ttcs.next();
+				TopicCount ttc = ttcs.next();
 				final double topicCount = topicCounts.topicCount(ttc.topic);
 				if(topicCount > 0.0) {
 					double conceptTermWeight = ttc.count / topicCount;
@@ -162,9 +162,9 @@ public class ESA implements AutoCloseable {
 		for(int typeIdx : documentTerms[docNum]) {
 			double termWeight = tfidf(docNum, typeIdx);
 			
-			Iterator<TypeTopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
+			Iterator<TopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
 			while(ttcs.hasNext()) {
-				TypeTopicCount ttc = ttcs.next();
+				TopicCount ttc = ttcs.next();
 				featureIdx = features.indexOfI(ttc.topic, false);
 				if(featureIdx != ReverseIndex.KEY_NOT_FOUND) {
 					final double topicCount = topicCounts.topicCount(ttc.topic);
