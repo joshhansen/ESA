@@ -69,12 +69,14 @@ public final class RunESA {
 		int topN = 1;
 		String featselFilename = Paths.featselFilename(topicWordIdxName, datasetName, topN);
 		
-//		esa.selectFeatures(featselFilename, topN);
+//		SelectFeatures.selectFeatures(esa, featselFilename, topN);
 		
 		System.out.print("Deserializing selected features...");
 		IntIndex features = (IntIndex) Util.deserialize(featselFilename);
 		System.out.println("done.");
 //		esa.printReducedDocs(features);
-		esa.printReducedDocsLibSvm(features);
+//		esa.printReducedDocsLibSvm(features);
+		String dimReducedFilename = Paths.dimensionReducedDocsFilename(topicWordIdxName, datasetName, topN);
+		ReduceDimensionality.reduceDimensionality(esa, features, dimReducedFilename);
 	}//end main
 }

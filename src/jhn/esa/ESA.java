@@ -185,31 +185,7 @@ public class ESA implements AutoCloseable {
 		return semInterp;
 	}
 	
-	public void selectFeatures(String outputFilename, int topN) throws Exception {
-		log.print("Selecting features...");
-		IntIndex topics = new IntRAMIndex();
-		
-		IntDoubleCounter semInterpVector;
-		for(int docNum = 0; docNum < numDocs; docNum++) {
-			semInterpVector = semInterp(docNum);
-			
-			for(Int2DoubleMap.Entry entry : semInterpVector.fastTopN(topN)) {
-				topics.indexOfI(entry.getIntKey());
-			}
-			
-			log.print('.');
-			if(docNum % 120 == 0) {
-				log.println(docNum);
-			}
-		}
-		log.println("done.");
-		
-		log.println("Selected " + topics.size() + " features.");
-		
-		log.print("Serializing selected features...");
-		Util.serialize(topics, outputFilename);
-		log.println("done.");
-	}
+
 	
 	public static final Comparator<Int2DoubleMap.Entry> fastKeyCmp = new Comparator<Int2DoubleMap.Entry>(){
 		@Override
@@ -218,39 +194,11 @@ public class ESA implements AutoCloseable {
 		}
 	};
 	
-	public void printReducedDocsLibSvm(IntIndex features) throws Exception {
-		try(PrintStream out = new PrintStream(new FileOutputStream(logDir + "/reduced.libsvm"))) {
-			printReducedDocsLibSvm(features, out);
-		}
+
+	public int docLabelIdx(int docNum) {
+		return allLabels.indexOf(docLabels[docNum]);
 	}
 	
-	private void printReducedDocsLibSvm(IntIndex features, PrintStream out) throws Exception {
-		int classNum;
-		IntDoubleCounter semInterpVector;
-		for(int docNum = 0; docNum < numDocs; docNum++) {
-			semInterpVector = semInterp(docNum, features);
-			
-			classNum = allLabels.indexOf(docLabels[docNum]);
-			
-			out.print(classNum);
-			
-			Int2DoubleMap.Entry[] entries = semInterpVector.int2DoubleEntrySet().toArray(new Int2DoubleMap.Entry[0]);
-			Arrays.sort(entries, fastKeyCmp);
-			
-			for(Int2DoubleMap.Entry entry : entries) {
-				out.print(' ');
-				out.print(entry.getIntKey());
-				out.print(':');
-				out.print(entry.getDoubleValue());
-			}
-			out.println();
-			
-			log.print('.');
-			if(docNum > 0 && docNum % 120 == 0) {
-				log.println(docNum);
-			}
-		}
-	}
 
 	@Override
 	public void close() throws Exception {
