@@ -134,7 +134,7 @@ public class ESA implements AutoCloseable {
 		return tf[docNum].getCount(typeIdx) * idf;
 	}
 	
-	private IntDoubleCounter semInterp(int docNum) throws Exception {
+	public IntDoubleCounter semanticInterpretationVector(int docNum) throws Exception {
 		IntDoubleRAMCounter semInterp = new IntDoubleRAMCounter();
 		
 		for(int typeIdx : documentTerms[docNum]) {
@@ -156,7 +156,7 @@ public class ESA implements AutoCloseable {
 		return semInterp;
 	}
 	
-	private IntDoubleCounter semInterp(int docNum, IntIndex features) throws Exception {
+	public IntDoubleCounter semanticInterpretationVector(int docNum, IntIndex features) throws Exception {
 		IntDoubleRAMCounter semInterp = new IntDoubleRAMCounter();
 		int featureIdx;
 		for(int typeIdx : documentTerms[docNum]) {
