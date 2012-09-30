@@ -47,9 +47,6 @@ public final class RunESA {
 		
 		ESA esa = new ESA(tcs, ttcs, logFilename());
 		
-		esa.conf.putBool(Options.PRINT_REDUCED_DOCS, true);
-//		esa.conf.putInt(Options.REDUCED_DOCS_TOP_N, 10);
-		
 		System.out.print("Loading target corpus...");
 		InstanceList targetData = InstanceList.load(new File(jhn.Paths.malletDatasetFilename(datasetName)));
 		System.out.println("done.");
