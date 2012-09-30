@@ -134,6 +134,10 @@ public class ESA implements AutoCloseable {
 		return tf[docNum].getCount(typeIdx) * idf;
 	}
 	
+	public int numDocs() {
+		return numDocs;
+	}
+	
 	public IntDoubleCounter semanticInterpretationVector(int docNum) throws Exception {
 		IntDoubleRAMCounter semInterp = new IntDoubleRAMCounter();
 		
