@@ -12,7 +12,7 @@ public final class Paths {
 	}
 	
 	public static String featselFilename(String topicWordIdxName, String datasetName, int topN) {
-		return featselDir() + "/" + topicWordIdxName + ":" + datasetName + "_top" + topN + ".ser";
+		return featselDir() + "/" + extractedDataID(topicWordIdxName, datasetName, topN) + ".feature_set";
 	}
 	
 	public static String runsDir() {
