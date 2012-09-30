@@ -1,6 +1,8 @@
 package jhn.esa;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import cc.mallet.types.InstanceList;
 
@@ -32,11 +34,7 @@ public final class RunESA {
 		return filename;
 	}
 	
-	public static void main (String[] args) throws Exception {
-		final String topicWordIdxName = "wp_lucene4";
-		final String datasetName = "reuters21578";// toy_dataset2, debates2012, sacred_texts, state_of_the_union reuters21578
-		final int minCount = 2;
-		
+	public static ESA loadESA(String topicWordIdxName, String datasetName, int minCount) throws FileNotFoundException, ClassNotFoundException, IOException {
 		System.out.print("Loading type-topic counts...");
 		String ttCountsFilename = jhn.eda.Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TypeTopicCounts ttcs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
@@ -59,8 +57,17 @@ public final class RunESA {
 		System.out.print("Processing target corpus...");
 		esa.setTrainingData(targetData);
 		System.out.println("done.");
-		targetData = null;
-		System.gc();
+		
+		return esa;
+	}
+	
+	
+	public static void main (String[] args) throws Exception {
+		final String topicWordIdxName = "wp_lucene4";
+		final String datasetName = "reuters21578";// toy_dataset2, debates2012, sacred_texts, state_of_the_union reuters21578
+		final int minCount = 2;
+		
+		ESA esa = loadESA(topicWordIdxName, datasetName, minCount);
 		
 		int topN = 1;
 		String featselFilename = Paths.featselFilename(topicWordIdxName, datasetName, topN);
