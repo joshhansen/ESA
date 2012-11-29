@@ -2,8 +2,6 @@ package jhn.esa;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -29,7 +27,6 @@ import jhn.eda.typetopiccounts.TopicCount;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.Index;
 import jhn.idx.IntIndex;
-import jhn.idx.IntRAMIndex;
 import jhn.idx.RAMIndex;
 import jhn.idx.ReverseIndex;
 import jhn.util.Config;
@@ -37,7 +34,6 @@ import jhn.util.Log;
 import jhn.util.Util;
 
 public class ESA implements AutoCloseable {
-	private final String logDir;
 	private final Log log;
 	
 	protected int numDocs;
@@ -65,7 +61,6 @@ public class ESA implements AutoCloseable {
 	public ESA(TopicCounts topicCounts, TypeTopicCounts typeTopicCounts, String logDir) throws FileNotFoundException {
 		this.topicCounts = topicCounts;
 		this.typeTopicCounts = typeTopicCounts;
-		this.logDir = logDir;
 		new File(logDir).mkdirs();
 		this.log = new Log(System.out, logDir + "/main.log");
 
