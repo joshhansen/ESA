@@ -1,6 +1,7 @@
 package jhn.esa;
 
 public final class Paths {
+	private static final String FEATURE_SET_EXT = ".feature_set";
 	private Paths() {}
 	
 	public static String outputDir() {
@@ -12,7 +13,7 @@ public final class Paths {
 	}
 	
 	public static String featselFilename(String topicWordIdxName, String datasetName, int topN) {
-		return featselDir() + "/" + extractedDataID(topicWordIdxName, datasetName, topN) + ".feature_set";
+		return featselDir() + "/" + extractedDataID(topicWordIdxName, datasetName, topN) + FEATURE_SET_EXT;
 	}
 	
 	public static String dimReductionDir() {

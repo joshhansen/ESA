@@ -41,7 +41,7 @@ public class SelectFeatures {
 		System.out.println("done.");
 	}
 	
-	public static void main (String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		final String topicWordIdxName = "wp_lucene4";
 		final String datasetName = "reuters21578_noblah2";// toy_dataset2, debates2012, sacred_texts, state_of_the_union reuters21578
 		final int minCount = 2;

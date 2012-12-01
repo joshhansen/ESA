@@ -6,10 +6,10 @@ import java.io.IOException;
 
 import cc.mallet.types.InstanceList;
 
-import jhn.eda.topiccounts.TopicCounts;
-import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.IntIndex;
 import jhn.util.Util;
+import jhn.wp.topiccounts.TopicCounts;
+import jhn.wp.typetopiccounts.TypeTopicCounts;
 
 public final class RunESA {
 	private RunESA() {}
@@ -36,12 +36,12 @@ public final class RunESA {
 	
 	public static ESA loadESA(String topicWordIdxName, String datasetName, int minCount) throws FileNotFoundException, ClassNotFoundException, IOException {
 		System.out.print("Loading type-topic counts...");
-		String ttCountsFilename = jhn.eda.Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		String ttCountsFilename = jhn.Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TypeTopicCounts ttcs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
 		System.out.println("done.");
 		
 		System.out.print("Loading topic counts...");
-		final String topicCountsFilename = jhn.eda.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String topicCountsFilename = jhn.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
 		TopicCounts tcs = (TopicCounts) Util.deserialize(topicCountsFilename);
 		System.out.println("done.");
 		

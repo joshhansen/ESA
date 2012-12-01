@@ -1,48 +1,38 @@
 package jhn.esa;
 
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.Arrays;
 
 import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
 
 import jhn.counts.d.i.IntDoubleCounter;
+import jhn.io.LibSVMFileWriter;
 import jhn.idx.IntIndex;
 import jhn.util.Util;
 
 public class ReduceDimensionality {
-//	logDir + "/reduced.libsvm"
-	
 	public static void reduceDimensionality(ESA esa, IntIndex features, String outputFilename) throws Exception {
-		try(PrintStream out = new PrintStream(new FileOutputStream(outputFilename))) {
-			reduceDimensionality(esa, features, out);
-		}
-	}
-	
-	private static void reduceDimensionality(ESA esa, IntIndex features, PrintStream out) throws Exception {
-		int classNum;
-		IntDoubleCounter semInterpVector;
-		for(int docNum = 0; docNum < esa.numDocs(); docNum++) {
-			semInterpVector = esa.semanticInterpretationVector(docNum, features);
-			
-			classNum = esa.docLabelIdx(docNum);
-			
-			out.print(classNum);
-			
-			Int2DoubleMap.Entry[] entries = semInterpVector.int2DoubleEntrySet().toArray(new Int2DoubleMap.Entry[0]);
-			Arrays.sort(entries, ESA.fastKeyCmp);
-			
-			for(Int2DoubleMap.Entry entry : entries) {
-				out.print(' ');
-				out.print(entry.getIntKey());
-				out.print(':');
-				out.print(entry.getDoubleValue());
-			}
-			out.println();
-			
-			System.out.print('.');
-			if(docNum > 0 && docNum % 120 == 0) {
-				System.out.println(docNum);
+		try(LibSVMFileWriter out = new LibSVMFileWriter(outputFilename)) {
+			int classNum;
+			IntDoubleCounter semInterpVector;
+			for(int docNum = 0; docNum < esa.numDocs(); docNum++) {
+				semInterpVector = esa.semanticInterpretationVector(docNum, features);
+				
+				classNum = esa.docLabelIdx(docNum);
+				
+				out.startDocument(classNum);
+				
+				Int2DoubleMap.Entry[] entries = semInterpVector.int2DoubleEntrySet().toArray(new Int2DoubleMap.Entry[0]);
+				Arrays.sort(entries, ESA.fastKeyCmp);
+				
+				for(Int2DoubleMap.Entry entry : entries) {
+					out.featureValue(entry.getIntKey(), entry.getDoubleValue());
+				}
+				out.endDocument();
+				
+				System.out.print('.');
+				if(docNum > 0 && docNum % 120 == 0) {
+					System.out.println(docNum);
+				}
 			}
 		}
 	}
