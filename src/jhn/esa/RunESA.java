@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import cc.mallet.types.InstanceList;
 
+import jhn.ExtractorParams;
 import jhn.eda.topiccounts.TopicCounts;
 import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.IntIndex;
@@ -34,21 +35,22 @@ public final class RunESA {
 		return filename;
 	}
 	
-	public static ESA loadESA(String topicWordIdxName, String datasetName, int minCount) throws FileNotFoundException, ClassNotFoundException, IOException {
+	public static ESA loadESA(ExtractorParams ep) throws FileNotFoundException, ClassNotFoundException, IOException {
+		
 		System.out.print("Loading type-topic counts...");
-		String ttCountsFilename = jhn.Paths.typeTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		String ttCountsFilename = jhn.Paths.typeTopicCountsFilename(ep);
 		TypeTopicCounts ttcs = (TypeTopicCounts) Util.deserialize(ttCountsFilename);
 		System.out.println("done.");
 		
 		System.out.print("Loading topic counts...");
-		final String topicCountsFilename = jhn.Paths.filteredTopicCountsFilename(topicWordIdxName, datasetName, minCount);
+		final String topicCountsFilename = jhn.Paths.filteredTopicCountsFilename(ep);
 		TopicCounts tcs = (TopicCounts) Util.deserialize(topicCountsFilename);
 		System.out.println("done.");
 		
 		ESA esa = new ESA(tcs, ttcs, logFilename());
 		
 		System.out.print("Loading target corpus...");
-		InstanceList targetData = InstanceList.load(new File(jhn.Paths.malletDatasetFilename(datasetName)));
+		InstanceList targetData = InstanceList.load(new File(jhn.Paths.malletDatasetFilename(ep.datasetName)));
 		System.out.println("done.");
 		
 		System.out.print("Processing target corpus...");
@@ -58,25 +60,22 @@ public final class RunESA {
 		return esa;
 	}
 	
-	
 	public static void main (String[] args) throws Exception {
-		final String topicWordIdxName = "wp_lucene4";
-		final String datasetName = "reuters21578";// toy_dataset2, debates2012, sacred_texts, state_of_the_union reuters21578
-		final int minCount = 2;
+		ExtractorParams ep = new ExtractorParams();
+		ep.topicWordIdxName = "wp_lucene4";
+		ep.datasetName = "reuters21578_noblah2";// toy_dataset2, debates2012, sacred_texts, state_of_the_union reuters21578
+		ep.minCount = 2;
 		
-		ESA esa = loadESA(topicWordIdxName, datasetName, minCount);
+		ESA esa = loadESA(ep);
 		
 		int topN = 1;
-		String featselFilename = Paths.featselFilename(topicWordIdxName, datasetName, topN);
-		
-//		SelectFeatures.selectFeatures(esa, featselFilename, topN);
+		String featselFilename = Paths.featselFilename(ep.topicWordIdxName, ep.datasetName, topN);
 		
 		System.out.print("Deserializing selected features...");
 		IntIndex features = (IntIndex) Util.deserialize(featselFilename);
 		System.out.println("done.");
-//		esa.printReducedDocs(features);
-//		esa.printReducedDocsLibSvm(features);
-		String dimReducedFilename = Paths.dimensionReducedDocsFilename(topicWordIdxName, datasetName, topN);
+		
+		String dimReducedFilename = Paths.dimensionReducedDocsFilename(ep.topicWordIdxName, ep.datasetName, topN);
 		ReduceDimensionality.reduceDimensionality(esa, features, dimReducedFilename);
-	}//end main
+	}
 }

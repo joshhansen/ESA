@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
 
+import jhn.ExtractorParams;
 import jhn.counts.d.i.IntDoubleCounter;
 import jhn.io.LibSVMFileWriter;
 import jhn.idx.IntIndex;
@@ -38,19 +39,21 @@ public class ReduceDimensionality {
 	}
 	
 	public static void main (String[] args) throws Exception {
-		final String topicWordIdxName = "wp_lucene4";
-		final String datasetName = "reuters21578";// toy_dataset2, debates2012, sacred_texts, state_of_the_union reuters21578
-		final int minCount = 2;
+		ExtractorParams ep = new ExtractorParams()
+			.topicWordIdxName("wp_lucene4")
+			.datasetName("reuters21578")// toy_dataset2, debates2012, sacred_texts, state_of_the_union reuters21578
+			.minCount(2);
+		
 		final int topN = 1;
 		
-		ESA esa = RunESA.loadESA(topicWordIdxName, datasetName, minCount);
+		ESA esa = RunESA.loadESA(ep);
 		
 		System.out.print("Deserializing selected features...");
-		String featselFilename = Paths.featselFilename(topicWordIdxName, datasetName, topN);
+		String featselFilename = Paths.featselFilename(ep.topicWordIdxName, ep.datasetName, topN);
 		IntIndex features = (IntIndex) Util.deserialize(featselFilename);
 		System.out.println("done.");
 		
-		String dimReducedFilename = Paths.dimensionReducedDocsFilename(topicWordIdxName, datasetName, topN);
+		String dimReducedFilename = Paths.dimensionReducedDocsFilename(ep.topicWordIdxName, ep.datasetName, topN);
 		reduceDimensionality(esa, features, dimReducedFilename);
 	}//end main
 }
