@@ -13,22 +13,22 @@ public final class Paths {
 	}
 	
 	public static String featselFilename(String topicWordIdxName, String datasetName, int topN) {
-		return featselDir() + "/" + extractedDataID(topicWordIdxName, datasetName, topN) + FEATURE_SET_EXT;
+		return featselDir() + "/" + topicWordIdxName + ":" + datasetName + "_top" + topN + FEATURE_SET_EXT;
 	}
 	
-	public static String dimReductionDir() {
-		return outputDir() + "/dimreduction";
+	public static String libSvmDir() {
+		return outputDir() + "/libsvm";
+	}
+	
+	private static String key(String topicWordIdxName, String datasetName, int topN) {
+		return topicWordIdxName + ":" + datasetName + "_top" + topN;
 	}
 	
 	public static String dimensionReducedDocsFilename(String topicWordIdxName, String datasetName, int topN) {
-		return dimReductionDir() + extractedDataID(topicWordIdxName, datasetName, topN) + ".doc_features.libsvm";
+		return libSvmDir() + "/" + key(topicWordIdxName, datasetName, topN) + jhn.Paths.LIBSVM_EXT;
 	}
 	
 	public static String runsDir() {
 		return outputDir() + "/runs";
-	}
-	
-	public static String extractedDataID(String topicWordIdxName, String datasetName, int minCount) {
-		return topicWordIdxName + ":" + datasetName + "_min" + minCount;
 	}
 }
