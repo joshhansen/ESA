@@ -134,6 +134,10 @@ public class ESA implements AutoCloseable {
 	}
 	
 	public IntDoubleCounter semanticInterpretationVector(int docNum) throws Exception {
+		return semanticInterpretationVector(docNum, true);
+	}
+	
+	public IntDoubleCounter semanticInterpretationVector(int docNum, boolean trim) throws Exception {
 		double termWeight, topicCount, conceptTermWeight;
 		TopicCount ttc;
 		Iterator<TopicCount> ttcs;
@@ -153,7 +157,9 @@ public class ESA implements AutoCloseable {
 			}
 		}
 		
-		semInterp.trim();
+		if(trim) {
+			semInterp.trim();
+		}
 		
 		return semInterp;
 	}
