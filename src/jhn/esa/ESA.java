@@ -134,17 +134,20 @@ public class ESA implements AutoCloseable {
 	}
 	
 	public IntDoubleCounter semanticInterpretationVector(int docNum) throws Exception {
+		double termWeight, topicCount, conceptTermWeight;
+		TopicCount ttc;
+		Iterator<TopicCount> ttcs;
 		IntDoubleRAMCounter semInterp = new IntDoubleRAMCounter();
 		
 		for(int typeIdx : documentTerms[docNum]) {
-			double termWeight = tfidf(docNum, typeIdx);
+			termWeight = tfidf(docNum, typeIdx);
 			
-			Iterator<TopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
+			ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
 			while(ttcs.hasNext()) {
-				TopicCount ttc = ttcs.next();
-				final double topicCount = topicCounts.topicCount(ttc.topic);
+				ttc = ttcs.next();
+				topicCount = topicCounts.topicCount(ttc.topic);
 				if(topicCount > 0.0) {
-					double conceptTermWeight = ttc.count / topicCount;
+					conceptTermWeight = ttc.count / topicCount;
 					semInterp.inc(ttc.topic, termWeight * conceptTermWeight);
 				}
 			}
@@ -156,19 +159,22 @@ public class ESA implements AutoCloseable {
 	}
 	
 	public IntDoubleCounter semanticInterpretationVector(int docNum, IntIndex features) throws Exception {
-		IntDoubleRAMCounter semInterp = new IntDoubleRAMCounter();
 		int featureIdx;
+		double termWeight, topicCount, conceptTermWeight;
+		TopicCount ttc;
+		Iterator<TopicCount> ttcs;
+		IntDoubleRAMCounter semInterp = new IntDoubleRAMCounter();
 		for(int typeIdx : documentTerms[docNum]) {
-			double termWeight = tfidf(docNum, typeIdx);
+			termWeight = tfidf(docNum, typeIdx);
 			
-			Iterator<TopicCount> ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
+			ttcs = typeTopicCounts.typeTopicCounts(typeIdx);
 			while(ttcs.hasNext()) {
-				TopicCount ttc = ttcs.next();
+				ttc = ttcs.next();
 				featureIdx = features.indexOfI(ttc.topic, false);
 				if(featureIdx != ReverseIndex.KEY_NOT_FOUND) {
-					final double topicCount = topicCounts.topicCount(ttc.topic);
+					topicCount = topicCounts.topicCount(ttc.topic);
 					if(topicCount > 0.0) {
-						double conceptTermWeight = ttc.count / topicCount;
+						conceptTermWeight = ttc.count / topicCount;
 						semInterp.inc(featureIdx, termWeight * conceptTermWeight);
 					}
 				}
