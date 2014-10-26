@@ -6,10 +6,10 @@ import java.io.IOException;
 
 import cc.mallet.types.InstanceList;
 
+import jhn.eda.topiccounts.TopicCounts;
+import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.IntIndex;
 import jhn.util.Util;
-import jhn.wp.topiccounts.TopicCounts;
-import jhn.wp.typetopiccounts.TypeTopicCounts;
 
 public final class RunESA {
 	private RunESA() {}

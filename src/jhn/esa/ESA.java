@@ -22,6 +22,9 @@ import jhn.counts.d.i.IntDoubleCounter;
 import jhn.counts.d.i.IntDoubleRAMCounter;
 import jhn.counts.i.i.IntIntCounter;
 import jhn.counts.i.i.IntIntRAMCounter;
+import jhn.eda.topiccounts.TopicCounts;
+import jhn.eda.typetopiccounts.TopicCount;
+import jhn.eda.typetopiccounts.TypeTopicCounts;
 import jhn.idx.Index;
 import jhn.idx.IntIndex;
 import jhn.idx.RAMIndex;
@@ -29,9 +32,6 @@ import jhn.idx.ReverseIndex;
 import jhn.util.Config;
 import jhn.util.Log;
 import jhn.util.Util;
-import jhn.wp.topiccounts.TopicCounts;
-import jhn.wp.typetopiccounts.TopicCount;
-import jhn.wp.typetopiccounts.TypeTopicCounts;
 
 public class ESA implements AutoCloseable {
 	private final Log log;
