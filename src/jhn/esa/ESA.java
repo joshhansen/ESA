@@ -180,8 +180,6 @@ public class ESA implements AutoCloseable {
 		return semInterp;
 	}
 	
-
-	
 	public static final Comparator<Int2DoubleMap.Entry> fastKeyCmp = new Comparator<Int2DoubleMap.Entry>(){
 		@Override
 		public int compare(Int2DoubleMap.Entry o1, Int2DoubleMap.Entry o2) {
@@ -189,11 +187,9 @@ public class ESA implements AutoCloseable {
 		}
 	};
 	
-
 	public int docLabelIdx(int docNum) {
 		return allLabels.indexOf(docLabels[docNum]);
 	}
-	
 
 	@Override
 	public void close() throws Exception {
